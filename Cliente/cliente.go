@@ -1,49 +1,50 @@
 package main
 
 import (
-	"fmt"
-	"net/http"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
-	"strings"
+	"net/http"
 	"os"
+	"strings"
+
 	"github.com/rs/cors"
 )
-type pedido struct
-{
- Desc 	string 	`json:"Desc"`
- Id 	string	`json:"Id"`
+
+type pedido struct {
+	Desc string `json:"Desc"`
+	Id   string `json:"Id"`
 }
-type resultado struct
-{
-	Resultado 	string 	`json:"respuesta"`
+type resultado struct {
+	Resultado string `json:"respuesta"`
 }
+
 func main() {
 	go menu()
 	servidor()
 }
-func menu(){
+func menu() {
 	var numero int = 0
-	for(numero!=4){
+	for numero != 4 {
 		fmt.Println("1.Enviar pedido")
 		fmt.Println("2.Verificar pedido en restaurante")
 		fmt.Println("3.Verficar pedidio al repartidor")
 		fmt.Println("4.Salir")
 		fmt.Scanf("%d\n", &numero)
-		if(numero==1){
+		if numero == 1 {
 			leer_pedidio()
-		}else if(numero ==2){
+		} else if numero == 2 {
 			recibir_signal1()
-		}else if(numero ==3){
+		} else if numero == 3 {
 			recibir_signal2()
-		}else if(numero ==4){
+		} else if numero == 4 {
 			os.Exit(1)
-		}else{
+		} else {
 			fmt.Println(numero)
 		}
 	}
 }
-func leer_pedidio(){
+func leer_pedidio() {
 	var envio pedido
 	fmt.Println("Cual es ID?")
 	fmt.Scanf("%s\n", &envio.Id)
@@ -52,39 +53,39 @@ func leer_pedidio(){
 	enviar_signal(envio)
 }
 
-func servidor(){
+func servidor() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.Write([]byte("{\"hola\": \"mundo\"}"))
 	})
 	mux.HandleFunc("/recibido", func(w http.ResponseWriter, r *http.Request) {
-		var p resultado		
+		var p resultado
 		w.Header().Set("Content-Type", "application/json")
-		 s, err := ioutil.ReadAll(r.Body) 
-    		if err != nil {
-        		panic(err) // This would normally be a normal Error http response but I've put this here so it's easy for you to test.
-    		}
-    		err = json.Unmarshal(s, &p)
-    		if err != nil {
-        		panic(err) // This would normally be a normal Error http response but I've put this here so it's easy for you to test.
-    		}
-		fmt.Println("recibido:"+p.Resultado)
+		s, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			panic(err) // This would normally be a normal Error http response but I've put this here so it's easy for you to test.
+		}
+		err = json.Unmarshal(s, &p)
+		if err != nil {
+			panic(err) // This would normally be a normal Error http response but I've put this here so it's easy for you to test.
+		}
+		fmt.Println("recibido:" + p.Resultado)
 		w.Write([]byte("{\"respuesta\": \"confirmado\"}"))
 	})
 
-	mux.HandleFunc("/entregado", func(w http.ResponseWriter, r *http.Request) {		
-		var p resultado		
+	mux.HandleFunc("/entregado", func(w http.ResponseWriter, r *http.Request) {
+		var p resultado
 		w.Header().Set("Content-Type", "application/json")
-		 s, err := ioutil.ReadAll(r.Body) 
-    		if err != nil {
-        		panic(err) // This would normally be a normal Error http response but I've put this here so it's easy for you to test.
-    		}
-    		err = json.Unmarshal(s, &p)
-    		if err != nil {
-        		panic(err) // This would normally be a normal Error http response but I've put this here so it's easy for you to test.
-    		}
-		fmt.Println("recibido:"+p.Resultado)
+		s, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			panic(err) // This would normally be a normal Error http response but I've put this here so it's easy for you to test.
+		}
+		err = json.Unmarshal(s, &p)
+		if err != nil {
+			panic(err) // This would normally be a normal Error http response but I've put this here so it's easy for you to test.
+		}
+		fmt.Println("recibido:" + p.Resultado)
 		w.Write([]byte("{\"respuesta\": \"confirmado\"}"))
 	})
 	// cors.Default() setup the middleware with default options being
@@ -92,50 +93,50 @@ func servidor(){
 	handler := cors.Default().Handler(mux)
 	http.ListenAndServe(":9092", handler)
 }
-func enviar_signal(buf pedido){
+func enviar_signal(buf pedido) {
 	var r resultado
-	jjson := `{"Id":"`+buf.Id+`","Desc":"`+buf.Desc+`"}`
+	jjson := `{"Id":"` + buf.Id + `","Desc":"` + buf.Desc + `"}`
 	b := strings.NewReader(jjson)
-	resp, err := http.Post("http://localhost:9091/idpedido","application/json",b)
+	resp, err := http.Post("http://localhost:9093/idpedido-cli", "application/json", b)
 	if err != nil {
 		fmt.Println(err)
 		// handle error
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
-	err = json.Unmarshal(body,&r)
-    		if err != nil {
-        		panic(err) // This would normally be a normal Error http response but I've put this here so it's easy for you to test.
-    		}
+	err = json.Unmarshal(body, &r)
+	if err != nil {
+		panic(err) // This would normally be a normal Error http response but I've put this here so it's easy for you to test.
+	}
 	fmt.Println(r.Resultado)
 }
-func recibir_signal1(){//restaurante
+func recibir_signal1() { //restaurante
 	var r resultado
-	resp, err := http.Get("http://localhost:9091/")
+	resp, err := http.Get("http://localhost:9093/cli-res")
 	if err != nil {
 		fmt.Println(err)
 		// handle error
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
-	err = json.Unmarshal(body,&r)
-    		if err != nil {
-        		panic(err) // This would normally be a normal Error http response but I've put this here so it's easy for you to test.
-    		}
+	err = json.Unmarshal(body, &r)
+	if err != nil {
+		panic(err) // This would normally be a normal Error http response but I've put this here so it's easy for you to test.
+	}
 	fmt.Println(r.Resultado)
 }
-func recibir_signal2(){//repartidor
+func recibir_signal2() { //repartidor
 	var r resultado
-	resp, err := http.Get("http://localhost:9090/")
+	resp, err := http.Get("http://localhost:9093/cli-rep")
 	if err != nil {
 		fmt.Println(err)
 		// handle error
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
-	err = json.Unmarshal(body,&r)
-    		if err != nil {
-        		panic(err) // This would normally be a normal Error http response but I've put this here so it's easy for you to test.
-    		}
+	err = json.Unmarshal(body, &r)
+	if err != nil {
+		panic(err) // This would normally be a normal Error http response but I've put this here so it's easy for you to test.
+	}
 	fmt.Println(r.Resultado)
 }

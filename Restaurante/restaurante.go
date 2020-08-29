@@ -1,63 +1,65 @@
 package main
 
 import (
-	"fmt"
-	"net/http"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
-	"strings"
+	"net/http"
 	"os"
+	"strings"
+
 	"github.com/rs/cors"
 )
-type pedido struct
-{
- Desc 	string 	`json:"Desc"`
- Id 	string	`json:"Id"`
+
+type pedido struct {
+	Desc string `json:"Desc"`
+	Id   string `json:"Id"`
 }
-type resultado struct
-{
-	Resultado 	string 	`json:"respuesta"`
+type resultado struct {
+	Resultado string `json:"respuesta"`
 }
+
 var p pedido
+
 func main() {
 	go menu()
 	servidor()
 }
-func menu(){
+func menu() {
 	var numero int = 0
-	for(numero!=4){
+	for numero != 4 {
 		fmt.Println("1.Enviar pedido al repartidor")
 		fmt.Println("2.Salir")
 		fmt.Scanf("%d\n", &numero)
-		if(numero==1){
+		if numero == 1 {
 			enviar_signal(p)
-		}else if(numero ==2){
+		} else if numero == 2 {
 			os.Exit(1)
-		}else{
+		} else {
 			fmt.Println("error")
 		}
 	}
 }
-func servidor(){
+func servidor() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		if ((pedido{})==p){
+		if (pedido{}) == p {
 			w.Write([]byte("{\"respuesta\": \"ya en el repartidor\"}"))
-		}else{
+		} else {
 			w.Write([]byte("{\"respuesta\": \"aun en restaurante\"}"))
 		}
 	})
-	mux.HandleFunc("/idpedido", func(w http.ResponseWriter, r *http.Request) {				
+	mux.HandleFunc("/idpedido", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		 s, err := ioutil.ReadAll(r.Body) 
-    		if err != nil {
-        		panic(err) // This would normally be a normal Error http response but I've put this here so it's easy for you to test.
-    		}
-    		err = json.Unmarshal(s, &p)
-    		if err != nil {
-        		panic(err) // This would normally be a normal Error http response but I've put this here so it's easy for you to test.
-    		}
+		s, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			panic(err) // This would normally be a normal Error http response but I've put this here so it's easy for you to test.
+		}
+		err = json.Unmarshal(s, &p)
+		if err != nil {
+			panic(err) // This would normally be a normal Error http response but I've put this here so it's easy for you to test.
+		}
 		w.Write([]byte("{\"respuesta\": \"recibido\"}"))
 	})
 	// cors.Default() setup the middleware with default options being
@@ -65,10 +67,10 @@ func servidor(){
 	handler := cors.Default().Handler(mux)
 	http.ListenAndServe(":9091", handler)
 }
-func enviar_signal(buf pedido){
-	jjson := `{"Id":"`+buf.Id+`","Desc":"`+buf.Desc+`"}`
+func enviar_signal(buf pedido) {
+	jjson := `{"Id":"` + buf.Id + `","Desc":"` + buf.Desc + `"}`
 	b := strings.NewReader(jjson)
-	resp, err := http.Post("http://localhost:9090/idpedido","application/json",b)
+	resp, err := http.Post("http://localhost:9093/idpedido-res", "application/json", b)
 	if err != nil {
 		fmt.Println(err)
 		// handle error
@@ -76,10 +78,10 @@ func enviar_signal(buf pedido){
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	var r resultado
-	err = json.Unmarshal(body,&r)
-    		if err != nil {
-        		panic(err) // This would normally be a normal Error http response but I've put this here so it's easy for you to test.
-    		}
+	err = json.Unmarshal(body, &r)
+	if err != nil {
+		panic(err) // This would normally be a normal Error http response but I've put this here so it's easy for you to test.
+	}
 	fmt.Println(r.Resultado)
 	p = pedido{}
 }
