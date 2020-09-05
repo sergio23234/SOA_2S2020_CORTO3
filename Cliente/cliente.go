@@ -73,7 +73,6 @@ func servidor() {
 		fmt.Println("recibido:" + p.Resultado)
 		w.Write([]byte("{\"respuesta\": \"confirmado\"}"))
 	})
-
 	mux.HandleFunc("/entregado", func(w http.ResponseWriter, r *http.Request) {
 		var p resultado
 		w.Header().Set("Content-Type", "application/json")
@@ -93,7 +92,7 @@ func servidor() {
 	handler := cors.Default().Handler(mux)
 	http.ListenAndServe(":9092", handler)
 }
-func enviar_signal(buf pedido) {
+func enviar_signal(buf pedido) { //enviar pedido al restaurante
 	var r resultado
 	jjson := `{"Id":"` + buf.Id + `","Desc":"` + buf.Desc + `"}`
 	b := strings.NewReader(jjson)

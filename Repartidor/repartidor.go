@@ -53,7 +53,6 @@ func servidor() {
 			w.Write([]byte("{\"respuesta\": \"en camino\"}"))
 		}
 	})
-
 	mux.HandleFunc("/idpedido", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		s, err := ioutil.ReadAll(r.Body)
