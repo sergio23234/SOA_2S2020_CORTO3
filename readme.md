@@ -9,4 +9,4 @@ Se tiene en cada una de los archivos un servidor:
 - en localhost : 9091 esta corriendo el servidor del restaurante para recibir el pedido del cliente y enviarlo al restaurante
 - en localhost : 9090 esta corriendo el servidor del repartidor para recibir los pedidos del restaurante/cliente y enviar los mensajes al ciente
 ### link del video:
-https://youtu.be/cPsimgn_N9o
+https://www.youtube.com/watch?v=XcYs6tjvMzk
